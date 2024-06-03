@@ -120,42 +120,153 @@ print(len(unique_weapon_values))
 
 
 
+#%% max an min year months
+
+df = data_columns1[data_columns1['Year'] != 2024]
+
+total_victims_by_year = df.groupby('Year')['TotalVictims'].sum()
+max_year = total_victims_by_year.idxmax()
+min_year = total_victims_by_year.idxmin()
+
+max_year_data = df[df['Year'] == max_year].groupby('Month')['TotalVictims'].sum().reset_index()
+min_year_data = df[df['Year'] == min_year].groupby('Month')['TotalVictims'].sum().reset_index()
+
+plt.figure(figsize=(12, 6))
+
+# Plot for max year
+plt.subplot(1, 2, 1)
+plt.plot(max_year_data['Month'], max_year_data['TotalVictims'], marker='o', linestyle='-', color='b')
+plt.title(f'Total Number of Victims by Month in {max_year}')
+plt.xlabel('Month')
+plt.ylabel('Total Number of Victims')
+plt.grid(True)
+plt.xticks(range(1, 13))
+plt.tight_layout()
+plt.show()
+
+# Plot for min year
+plt.subplot(1, 2, 2)
+plt.plot(min_year_data['Month'], min_year_data['TotalVictims'], marker='o', linestyle='-', color='r')
+plt.title(f'Total Number of Victims by Month in {min_year}')
+plt.xlabel('Month')
+plt.ylabel('Total Number of Victims')
+plt.grid(True)
+plt.xticks(range(1, 13))
+
+plt.tight_layout()
+plt.show()
+#%% locations for crimes
+
+location_mapping = {
+    'Air/Bus/Train Terminal': 'Transportation',
+    'Bank/Savings and Loan': 'Financial Institution',
+    'Bar/Night Club': 'Entertainment Venue',
+    'Church/Synagogue/Temple': 'Religious Site',
+    'Commercial/Office Building': 'Commercial Building',
+    'Construction Site': 'Construction Site',
+    'Convenience Store': 'Retail Store',
+    'Department/Discount Store': 'Retail Store',
+    'Drug Store/Dr.’s Office/Hospital': 'Healthcare Facility',
+    'Field/Woods/Park': 'Outdoor Area',
+    'Government/Public Building': 'Government Building',
+    'Grocery/Supermarket': 'Retail Store',
+    'Highway/Road/Alley/Street': 'Public Space',
+    'Hotel/Motel/etc.': 'Lodging',
+    'Jail/Prison': 'Correctional Facility',
+    'Lake/Waterway/Beach': 'Outdoor Area',
+    'Liquor Store': 'Retail Store',
+    'Parking Lot/Garage': 'Public Space',
+    'Rental Storage Facility': 'Storage Facility',
+    'Residence/Home/Driveway': 'Residential Area',
+    'Restaurant': 'Food Service',
+    'Service/Gas Station': 'Retail Store',
+    'Specialty Store (TV, Fur, etc.)': 'Retail Store',
+    'Other/Unknown': 'Other/Unknown',
+    'Abandoned/Condemned Structure': 'Abandoned Structure',
+    'Amusement Park': 'Entertainment Venue',
+    'Arena/Stadium/Fairgrounds/Coliseum': 'Entertainment Venue',
+    'ATM Separate from Bank': 'Financial Institution',
+    'Auto Dealership New/Used': 'Retail Store',
+    'Camp/Campground': 'Outdoor Area',
+    'Daycare Facility': 'Educational Facility',
+    'Dock/Wharf/Freight/Modal Terminal': 'Transportation',
+    'Farm Facility': 'Agricultural Area',
+    'Gambling Facility/Casino/Race Track': 'Entertainment Venue',
+    'Industrial Site': 'Industrial Area',
+    'Military Installation': 'Military Site',
+    'Park/Playground': 'Outdoor Area',
+    'Rest Area': 'Public Space',
+    'School-College/University': 'Educational Facility',
+    'School-Elementary/Secondary': 'Educational Facility',
+    'Shelter-Mission/Homeless': 'Social Service Facility',
+    'Shopping Mall': 'Retail Store',
+    'Tribal Lands': 'Tribal Lands',
+    'Community Center': 'Community Center'
+}
+
+data_columns1['Location'] = data_columns1['Location'].map(location_mapping)
+
+total_victims_by_location = data_columns1.groupby('Location')['TotalVictims'].sum()
+
+# Get the top 5 locations with the highest number of total victims
+top_5_locations = total_victims_by_location.nlargest(5).reset_index()
+
+# Plotting the graph
+plt.figure(figsize=(10, 6))
+plt.bar(top_5_locations['Location'], top_5_locations['TotalVictims'], color='skyblue')
+plt.title('Top 5 Locations with Most Crimes')
+plt.xlabel('Location')
+plt.ylabel('Total Number of Victims')
+plt.grid(axis='y')
+
+plt.show()
+
+
 #%% Set the style to a chosen one
 plt.style.use('seaborn-v0_8')
 
-# Assuming you have a DataFrame called 'data' with the column 'suspects_race_as_a_group'
 suspects_race_freq = data_columns1['SuspectsRace'].value_counts().sort_values(ascending=False)
 fig, ax = plt.subplots(figsize=(10, 6))
 suspects_race_freq.plot(kind='pie', labels=None, ax=ax)
 ax.set_title("Distribution of Suspects' Races Across All Crimes")
-ax.set_ylabel('')  # Remove y-label for a cleaner look
+ax.set_ylabel('')
 
-# Add legend to the side
-#plt.legend(title='Race', labels=suspects_race_freq.index, loc='center left', bbox_to_anchor=(1, 0.5))
 
-# Adjust layout to make room for the legend
-#plt.tight_layout()
+plt.legend(title='Race', labels=suspects_race_freq.index, loc='center left', bbox_to_anchor=(1, 0.5))
 
-# Show the plot
-#plt.show()
+plt.tight_layout()
 
-plotly_fig = mpl_to_plotly(fig)
+plt.show()
 
-plotly_fig.update_layout(
-    width=800,
-    height=600,
-    margin=dict(l=50, r=50, t=50, b=50)
-)
+# plotly_fig = mpl_to_plotly(fig)
+
+# plotly_fig.update_layout(
+#     width=800,
+#     height=600,
+#     margin=dict(l=50, r=50, t=50, b=50)
+# )
+
+#%% number of victims by year
+
+victims_by_year = data_columns1.groupby('Year')['TotalVictims'].sum().reset_index()
+
+# Plotting the graph
+plt.figure(figsize=(10, 6))
+plt.plot(victims_by_year['Year'], victims_by_year['TotalVictims'], marker='o', linestyle='-', color='b')
+plt.title('Total Number of Victims by Year')
+plt.xlabel('Year')
+plt.ylabel('Total Number of Victims')
+plt.grid(True)
+plt.show()
+#%%Most Frequent Bias
 
 #%% distribution of number of victims
 
 victim_counts = data_columns1['TotalVictims'].value_counts().reset_index()
 victim_counts.columns = ['Number of Victims', 'Frequency']
 
-# Sort the DataFrame by the number of victims
 victim_counts = victim_counts.sort_values(by='Number of Victims')
 
-# Display the table
 print(victim_counts)
 
 app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -203,6 +314,9 @@ app.layout = html.Div(
     #     ),
     #]),
     ])
+
+
+
 
 # Run the app
 if __name__ == '__main__':
