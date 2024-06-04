@@ -16,6 +16,7 @@ import plotly.express as px
 from plotly.tools import mpl_to_plotly
 import dash_bootstrap_components as dbc 
 import dash_table
+import plotly.graph_objs as go
 #%% importing data
 
 data = pd.read_csv("Police_Department_Investigated_Hate_Crimes_20240531.csv")
@@ -81,12 +82,12 @@ column_rename_dict = {
 data_columns1 = data_columns1.rename(columns=column_rename_dict)
 print(data_columns1.columns)
 
-#%% location
+#%% about data: location
 unique_location_values = data_columns1["Location"].unique()
 print(unique_location_values)
 print(len(unique_location_values))
 
-#%%bias/victim type
+#%% about data: bias/victim type
 unique_bias_values = data_columns1["Bias"].unique()
 print(unique_bias_values)
 print(len(unique_bias_values))
@@ -100,7 +101,7 @@ unique_victype_values = data_columns1["VictimType"].unique()
 print(unique_victype_values)
 print(len(unique_victype_values))
 
-#%% weapon
+#%% about data: weapon
 unique_weapon_values = data_columns1["Weapon"].unique()
 print(unique_weapon_values)
 print(len(unique_weapon_values))
@@ -116,11 +117,21 @@ weapon_group = {
 data_columns1['Weapon'] = data_columns1['Weapon'].replace(weapon_group)
 print(data_columns1['Weapon'].unique())
 print(len(unique_weapon_values))
-#%% frequency of suspects races
 
+#%% number of victims by year
 
+victims_by_year = data_columns1.groupby('Year')['TotalVictims'].sum().reset_index()
 
-#%% max an min year months
+# Plotting the graph
+plt.figure(figsize=(10, 6))
+plt.plot(victims_by_year['Year'], victims_by_year['TotalVictims'], marker='o', linestyle='-', color='b')
+plt.title('Total Number of Victims by Year')
+plt.xlabel('Year')
+plt.ylabel('Total Number of Victims')
+plt.grid(True)
+plt.show()
+
+#%% years with most and least victims by month
 
 df = data_columns1[data_columns1['Year'] != 2024]
 
@@ -155,7 +166,18 @@ plt.xticks(range(1, 13))
 
 plt.tight_layout()
 plt.show()
-#%% locations for crimes
+
+#%% distribution of number of victims attacked at a time
+
+victim_counts = data_columns1['TotalVictims'].value_counts().reset_index()
+victim_counts.columns = ['Number of Victims', 'Frequency']
+
+victim_counts = victim_counts.sort_values(by='Number of Victims')
+
+print(victim_counts)
+
+app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
+#%% 5 locations for crimes bar graph
 
 location_mapping = {
     'Air/Bus/Train Terminal': 'Transportation',
@@ -222,9 +244,9 @@ plt.grid(axis='y')
 plt.show()
 
 
-#%% Set the style to a chosen one
-plt.style.use('seaborn-v0_8')
 
+
+#%% race of suspects pie
 suspects_race_freq = data_columns1['SuspectsRace'].value_counts().sort_values(ascending=False)
 fig, ax = plt.subplots(figsize=(10, 6))
 suspects_race_freq.plot(kind='pie', labels=None, ax=ax)
@@ -238,38 +260,296 @@ plt.tight_layout()
 
 plt.show()
 
-# plotly_fig = mpl_to_plotly(fig)
+plotly_fig = mpl_to_plotly(fig)
 
-# plotly_fig.update_layout(
-#     width=800,
-#     height=600,
-#     margin=dict(l=50, r=50, t=50, b=50)
-# )
+plotly_fig.update_layout(
+    width=800,
+    height=600,
+    margin=dict(l=50, r=50, t=50, b=50)
+)
 
-#%% number of victims by year
 
-victims_by_year = data_columns1.groupby('Year')['TotalVictims'].sum().reset_index()
+#%% frequency of weapons used (generalized) bar
 
-# Plotting the graph
-plt.figure(figsize=(10, 6))
-plt.plot(victims_by_year['Year'], victims_by_year['TotalVictims'], marker='o', linestyle='-', color='b')
-plt.title('Total Number of Victims by Year')
+#%% most Frequent Bias 
+weapon_rename_dict = {
+    'Personal weapons (hands, feet, teeth, etc.)': 'Personal',
+    'Unknown': 'Unknown',
+    'Other (bottle, rocks, spitting)': 'Other',
+    'Firearm': 'Firearm',
+    'Blunt object (blugeon, club, etc.)': 'Blunt Object',
+    'Knife or Other Cutting or Stabbing Instrument': 'Knife',
+    'Knife or other cutting or stabbing instrument': 'Knife',
+    'Vehicle': 'Vehicle',
+    'Ropes or garrote strangulation or hanging': 'Strangulation',
+    'Arson, fire': 'Arson'
+}
+#%%
+df['Weapon'] = df['Weapon'].map(weapon_rename_dict)
+
+weapon_counts = data_columns1['Weapon'].value_counts()
+
+plt.figure(figsize=(12, 8))
+weapon_counts.plot(kind='bar', color='skyblue')
+plt.title('Most Frequent Weapons Used')
+plt.xlabel('Weapon Type')
+plt.ylabel('Frequency')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+#%% bias type and victim type bar and pie
+
+bias_counts = data_columns1['BiasType'].value_counts()
+
+plt.figure(figsize=(12, 8))
+bias_counts.plot(kind='bar', color='skyblue')
+plt.title('Most Frequent Biases Type')
+plt.xlabel('Bias Type')
+plt.ylabel('Frequency')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+
+victim_type_counts = data_columns1['VictimType'].value_counts()
+
+plt.figure(figsize=(10, 10))
+plt.pie(victim_type_counts, labels=None, autopct='%1.1f%%', startangle=140, colors=plt.cm.Paired.colors)
+plt.title('Distribution of Victim Types')
+plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+plt.legend(victim_type_counts.index, title="Victim Types", bbox_to_anchor=(1, 0, 0.5, 1))
+plt.show()
+
+#%% more detailed bias bar
+
+bias_grouping_dict = {
+    'Anti-Gay (Male)': 'Gay(Male)',
+    'Anti-Transgender': 'Transgender',
+    'Anti-Lesbian': 'Lesbian',
+    'Anti-Lesbian/Gay/Bisexual/Transgender': 'Anti-LGBTQ',
+    'Anti-Lesbian/Gay/Bisexual or Transgender (Mixed Group)': 'Anti-LGBTQ',
+    'Anti-Bisexual': 'Bisexual',
+    'Anti-Asian': 'Asian',
+    'Anti-Black or African American': 'Black',
+    'Anti-Hispanic or Latino': 'Latino',
+    'Anti-White': 'White',
+    'Anti-Arab': 'Arab',
+    'Anti-Other Race/Ethnicity/Ancestry': 'Race',
+    'Anti-Multiple Races (Group)': 'Race',
+    'Anti-Jewish': 'Jewish',
+    'Anti-Islamic (Muslim)': 'Islamic',
+    'Anti-Catholic': 'Catholic',
+    'Anti-Other Religion': 'Religion',
+    'Anti-Multiple Religions (Group)': 'Religion',
+    'Anti-Hindu': 'Hindu',
+    'Anti-Protestant': 'Protestant',
+    'Anti-Other Christian': 'Christian',
+    'Anti-Mental Disability': 'Disability',
+    'Anti-Physical Disability': 'Disability',
+    'Anti-Gender Non-Conforming': 'Non-Binary',
+    'Anti-Female': 'Female',
+    'Anti-Male': 'Male',
+    'Anti-Citizenship Status': 'Minority'
+}
+
+data_columns1['DetailedBias'] = data_columns1['Bias'].map(bias_grouping_dict)
+
+broad_bias_counts = data_columns1['DetailedBias'].value_counts()
+
+plt.figure(figsize=(12, 8))
+broad_bias_counts.plot(kind='bar', color='skyblue')
+plt.title('Most Frequent Broad Biases')
+plt.xlabel('Detailed Bias Type')
+plt.ylabel('Frequency')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+
+# Plot for each racial group
+racial_groups = ['Asian', 'Black', 'White', 'Latino']
+racial_data = data_columns1[data_columns1['DetailedBias'].isin(racial_groups)]
+
+victims_by_year_race = racial_data.groupby(['Year', 'DetailedBias'])['TotalVictims'].sum().unstack()
+
+plt.figure(figsize=(12, 8))
+
+for race in victims_by_year_race.columns:
+    plt.plot(victims_by_year_race.index, victims_by_year_race[race], label=race)
+
+plt.title('Number of Victims Over Time (By Racial Group)')
 plt.xlabel('Year')
-plt.ylabel('Total Number of Victims')
+plt.ylabel('Number of Victims')
+plt.legend(title='Racial Group')
+plt.grid(True, linestyle='--', alpha=0.7)
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+#%% juvenile victims/suspects
+
+data_columns1.fillna(0, inplace=True)
+
+victim_counts = data_columns1[['AdultVictims', 'JuvenileVictims']].sum()
+suspect_counts = data_columns1[['AdultSuspects', 'JuvenileSuspects']].sum()
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 7))
+
+ax1.pie(victim_counts, labels=victim_counts.index, autopct='%1.1f%%', startangle=140, colors=plt.cm.Paired.colors)
+ax1.set_title('Distribution of Victims')
+ax1.axis('equal')
+
+ax2.pie(suspect_counts, labels=suspect_counts.index, autopct='%1.1f%%', startangle=140, colors=plt.cm.Paired.colors)
+ax2.set_title('Distribution of Suspects')
+ax2.axis('equal')
+
+plt.tight_layout()
+plt.show()
+#%% removing unnecessary data
+#%%
+print(data_columns1.columns)
+#%%
+df = data_columns1.copy()
+
+df['IsMultipleBias'] = df['IsMultipleBias'].fillna(df['IsMultipleBias'].mode()[0])  # Using mode for binary data
+df['AdultVictims'] = df['AdultVictims'].fillna(0)  # Assuming 0 victims if missing
+df['JuvenileVictims'] = df['JuvenileVictims'].fillna(0)  # Assuming 0 victims if missing
+df['AdultSuspects'] = df['AdultSuspects'].fillna(0)  # Assuming 0 suspects if missing
+df['JuvenileSuspects'] = df['JuvenileSuspects'].fillna(0)  # Assuming 0 suspects if 
+
+print(df.isnull().sum())
+
+#%% PREDICTIONS
+
+df.sort_values(by=['Year', 'Month'], inplace=True)
+
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(10, 6))
+plt.scatter(df.index, df['TotalVictims'], color='blue', label='Total Victims')
+plt.title('Total Victims over Time')
+plt.xlabel('Index of Data Points (Sorted by Year and Month)')
+plt.ylabel('Total Victims')
+plt.legend()
 plt.grid(True)
 plt.show()
-#%%Most Frequent Bias
 
-#%% distribution of number of victims
+from sklearn.linear_model import LinearRegression
 
-victim_counts = data_columns1['TotalVictims'].value_counts().reset_index()
-victim_counts.columns = ['Number of Victims', 'Frequency']
+# Prepare the data
+X = np.array(df.index).reshape(-1, 1)  # Index as the independent variable
+y = df['TotalVictims']
 
-victim_counts = victim_counts.sort_values(by='Number of Victims')
+# Initialize and train the linear regression model
+model = LinearRegression()
+model.fit(X, y)
 
-print(victim_counts)
+# Make predictions
+y_pred = model.predict(X)
 
-app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
+# Plot the linear regression line
+plt.figure(figsize=(10, 6))
+plt.scatter(df.index, df['TotalVictims'], color='blue', label='Total Victims')
+plt.plot(df.index, y_pred, color='red', linewidth=2, label='Linear Regression')
+plt.title('Total Victims over Time with Linear Regression')
+plt.xlabel('Index of Data Points (Sorted by Year and Month)')
+plt.ylabel('Total Victims')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Print the coefficients
+print(f'Intercept: {model.intercept_}')
+print(f'Coefficient: {model.coef_[0]}')
+
+#%%
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error
+import matplotlib.pyplot as plt
+df.sort_values(by=['Year', 'Month'], inplace=True)
+
+# Prepare the data
+X = np.array(df.index).reshape(-1, 1)  # Index as the independent variable
+y = df['TotalVictims']
+
+# Initialize and train the Random Forest Regressor
+model = RandomForestRegressor(n_estimators=100, random_state=42)
+model.fit(X, y)
+
+# Make predictions
+y_pred = model.predict(X)
+
+# Evaluate the model
+mse = mean_squared_error(y, y_pred)
+print(f'Mean Squared Error: {mse}')
+
+# Plot the results
+plt.figure(figsize=(10, 6))
+plt.scatter(df.index, df['TotalVictims'], color='blue', label='Total Victims')
+plt.plot(df.index, y_pred, color='red', linewidth=2, label='Random Forest Prediction')
+plt.title('Total Victims over Time with Random Forest Regressor')
+plt.xlabel('Index of Data Points (Sorted by Year and Month)')
+plt.ylabel('Total Victims')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+#%%
+
+import pandas as pd
+import numpy as np
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import GridSearchCV, cross_val_score
+from sklearn.metrics import mean_squared_error
+import matplotlib.pyplot as plt
+
+# Assuming df is already loaded and sorted
+df.sort_values(by=['Year', 'Month'], inplace=True)
+
+# Prepare the data
+X = np.array(df.index).reshape(-1, 1)  # Index as the independent variable
+y = df['TotalVictims']
+
+# Hyperparameter tuning using Grid Search
+param_grid = {
+    'n_estimators': [100, 200, 300],
+    'max_depth': [None, 10, 20, 30],
+    'min_samples_split': [2, 5, 10],
+    'min_samples_leaf': [1, 2, 4]
+}
+
+grid_search = GridSearchCV(RandomForestRegressor(random_state=42), param_grid, cv=5, scoring='neg_mean_squared_error', n_jobs=-1)
+grid_search.fit(X, y)
+
+# Best parameters from Grid Search
+best_params = grid_search.best_params_
+print(f'Best parameters: {best_params}')
+
+# Train the best model
+best_model = grid_search.best_estimator_
+
+# Evaluate the model using cross-validation
+cv_scores = cross_val_score(best_model, X, y, cv=5, scoring='neg_mean_squared_error')
+mean_cv_score = -np.mean(cv_scores)
+print(f'Mean Cross-Validation MSE: {mean_cv_score}')
+
+# Make predictions
+y_pred = best_model.predict(X)
+
+# Evaluate the model
+mse = mean_squared_error(y, y_pred)
+print(f'Mean Squared Error: {mse}')
+
+# Plot the results
+plt.figure(figsize=(10, 6))
+plt.scatter(df.index, df['TotalVictims'], color='blue', label='Total Victims')
+plt.plot(df.index, y_pred, color='red', linewidth=2, label='Random Forest Prediction')
+plt.title('Total Victims over Time with Improved Random Forest Regressor')
+plt.xlabel('Index of Data Points (Sorted by Year and Month)')
+plt.ylabel('Total Victims')
+plt.legend()
+plt.grid(True)
+plt.show()
 
 #%% dash
 
@@ -301,18 +581,46 @@ app.layout = html.Div(
         style_cell={'textAlign': 'left', 'minWidth': '100px', 'width': '100px', 'maxWidth': '150px'},
     ),
     dcc.Graph(
-            id='suspects-race-pie-chart',
-            figure=plotly_fig
+        id='max-year-graph',
+        figure={
+            'data': [
+                go.Scatter(
+                    x=max_year_data['Month'],
+                    y=max_year_data['TotalVictims'],
+                    mode='lines+markers',
+                    marker=dict(color='blue'),
+                    name=f'Total Victims in {max_year}'
+                )
+            ],
+            'layout': go.Layout(
+                title=f'Total Number of Victims by Month in {max_year}',
+                xaxis=dict(title='Month', tickmode='linear'),
+                yaxis=dict(title='Total Number of Victims'),
+                gridcolor='LightGrey'
+            )
+        }
+    ),
+    
+    dcc.Graph(
+        id='min-year-graph',
+        figure={
+            'data': [
+                go.Scatter(
+                    x=min_year_data['Month'],
+                    y=min_year_data['TotalVictims'],
+                    mode='lines+markers',
+                    marker=dict(color='red'),
+                    name=f'Total Victims in {min_year}'
+                )
+            ],
+            'layout': go.Layout(
+                title=f'Total Number of Victims by Month in {min_year}',
+                xaxis=dict(title='Month', tickmode='linear'),
+                yaxis=dict(title='Total Number of Victims'),
+                gridcolor='LightGrey'
+            )
+        }
     )
-    # dcc.Graph(
-    #     id='suspects-race-plot',
-    #     figure=plotly_fig
-    #     ),
-    # dcc.Graph(
-    #     id='victim-pie-chart',
-    #     figure=plotly_victim_pie_chart
-    #     ),
-    #]),
     ])
 
 
