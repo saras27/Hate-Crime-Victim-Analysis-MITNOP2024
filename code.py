@@ -14,7 +14,7 @@ import tkinter as tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tkinter import ttk
 
-plt.rcParams["axes.prop_cycle"] = plt.cycler(color = ['#aee4ff', '#6a9cfd', '#ffb8d0', '#fee5e1', '#033495'])
+plt.rcParams["axes.prop_cycle"] = plt.cycler(color = ['#aee4ff', '#fad4c0', '#ffb8d0', '#64b6ac', '#b09b99'])
 
 #%% importing data
 
@@ -133,41 +133,32 @@ plt.grid(True)
 #%% years with most and least victims by month
 
 df = data_columns1[data_columns1['Year'] != 2024]
-
 total_victims_by_year = df.groupby('Year')['TotalVictims'].sum()
+
 max_year = total_victims_by_year.idxmax()
 min_year = total_victims_by_year.idxmin()
 
 max_year_data = df[df['Year'] == max_year].groupby('Month')['TotalVictims'].sum().reset_index()
 min_year_data = df[df['Year'] == min_year].groupby('Month')['TotalVictims'].sum().reset_index()
 
-fig = plt.figure(figsize=(10, 6))
+fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(10, 12))
 
-# Create a subplot and plot on it
-max_year_graph = fig.add_subplot(1, 2, 1)
-max_year_graph.plot(max_year_data['Month'], max_year_data['TotalVictims'], marker='o', linestyle='-', color='#033495')
-max_year_graph.set_title(f'Total Number of Victims by Month in {max_year}')
-max_year_graph.set_xlabel('Month')
-max_year_graph.set_ylabel('Total Number of Victims')
-max_year_graph.grid(True)
-max_year_graph.set_xticks(range(1, 13))
-plt.tight_layout()
-# plt.show()
+# Plot max year data
+axes[0].plot(max_year_data['Month'], max_year_data['TotalVictims'], marker='o', linestyle='-')
+axes[0].set_title(f'Total Victims by Month in Year {max_year} (Highest)')
+axes[0].set_xlabel('Month')
+axes[0].set_ylabel('Total Victims')
 
+# %% Plot min year data
+axes[1].plot(min_year_data['Month'], min_year_data['TotalVictims'], marker='o', linestyle='-')
+axes[1].set_title(f'Total Victims by Month in Year {min_year} (Lowest)')
+axes[1].set_xlabel('Month')
+axes[1].set_ylabel('Total Victims')
 
-#%%
-
-# Plot for min year
-min_year_graph = plt.subplot(1, 2, 2)
-plt.plot(min_year_data['Month'], min_year_data['TotalVictims'], marker='o', linestyle='-', color = '#6a9cfd')
-plt.title(f'Total Number of Victims by Month in {min_year}')
-plt.xlabel('Month')
-plt.ylabel('Total Number of Victims')
-plt.grid(True)
-plt.xticks(range(1, 13))
 
 plt.tight_layout()
-# plt.show()
+
+#plt.show()
 
 #%% distribution of number of victims attacked at a time
 
@@ -247,8 +238,9 @@ plt.grid(axis='y')
 
 
 #%% race of suspects pie
+
 suspects_race_freq = data_columns1['SuspectsRace'].value_counts().sort_values(ascending=False)
-fig, ax = plt.subplots(figsize=(10, 6))
+suspects_race_graph, ax = plt.subplots(figsize=(10, 6))
 suspects_race_freq.plot(kind='pie', labels=None, ax=ax)
 ax.set_title("Distribution of Suspects' Races Across All Crimes")
 ax.set_ylabel('')
@@ -348,23 +340,22 @@ data_columns1['DetailedBias'] = data_columns1['Bias'].map(bias_grouping_dict)
 
 broad_bias_counts = data_columns1['DetailedBias'].value_counts()
 
-plt.figure(figsize=(12, 8))
+broad_bias_graph = plt.figure(figsize=(12, 8))
 broad_bias_counts.plot(kind='bar')
-plt.title('Most Frequent Broad Biases')
+plt.title('Most Frequent Detailed Biases')
 plt.xlabel('Detailed Bias Type')
 plt.ylabel('Frequency')
 plt.xticks(rotation=45)
 plt.tight_layout()
 # plt.show()
+#%%Plot for each racial group
 
-
-# Plot for each racial group
 racial_groups = ['Asian', 'Black', 'White', 'Latino']
 racial_data = data_columns1[data_columns1['DetailedBias'].isin(racial_groups)]
 
 victims_by_year_race = racial_data.groupby(['Year', 'DetailedBias'])['TotalVictims'].sum().unstack()
 
-plt.figure(figsize=(12, 8))
+victims_by_year_race_graph = plt.figure(figsize=(12, 8))
 
 for race in victims_by_year_race.columns:
     plt.plot(victims_by_year_race.index, victims_by_year_race[race], label=race)
@@ -384,7 +375,7 @@ data_columns1.fillna(0, inplace=True)
 victim_counts = data_columns1[['AdultVictims', 'JuvenileVictims']].sum()
 suspect_counts = data_columns1[['AdultSuspects', 'JuvenileSuspects']].sum()
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 7))
+victim_suspec_age_graph, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 7))
 
 ax1.pie(victim_counts, labels=victim_counts.index, autopct='%1.1f%%', startangle=140)
 ax1.set_title('Distribution of Victims')
@@ -424,24 +415,20 @@ plt.ylabel('Total Victims')
 plt.legend()
 plt.grid(True)
 # plt.show()
-
+#%%
 from sklearn.linear_model import LinearRegression
 
-# Prepare the data
-X = np.array(df.index).reshape(-1, 1)  # Index as the independent variable
+X = np.array(df.index).reshape(-1, 1)  
 y = df['TotalVictims']
 
-# Initialize and train the linear regression model
 model = LinearRegression()
 model.fit(X, y)
 
-# Make predictions
 y_pred = model.predict(X)
 
-# Plot the linear regression line
-plt.figure(figsize=(10, 6))
+linear_regresion_graph = plt.figure(figsize=(10, 6))
 plt.scatter(df.index, df['TotalVictims'], label='Total Victims')
-plt.plot(df.index, y_pred, linewidth=2, label='Linear Regression')
+plt.plot(df.index, y_pred, linewidth=2, label='Linear Regression', color='black')
 plt.title('Total Victims over Time with Linear Regression')
 plt.xlabel('Index of Data Points (Sorted by Year and Month)')
 plt.ylabel('Total Victims')
@@ -449,7 +436,6 @@ plt.legend()
 plt.grid(True)
 # plt.show()
 
-# Print the coefficients
 print(f'Intercept: {model.intercept_}')
 print(f'Coefficient: {model.coef_[0]}')
 
@@ -459,25 +445,20 @@ from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 df.sort_values(by=['Year', 'Month'], inplace=True)
 
-# Prepare the data
-X = np.array(df.index).reshape(-1, 1)  # Index as the independent variable
+X = np.array(df.index).reshape(-1, 1)  
 y = df['TotalVictims']
 
-# Initialize and train the Random Forest Regressor
 model = RandomForestRegressor(n_estimators=100, random_state=42)
 model.fit(X, y)
 
-# Make predictions
 y_pred = model.predict(X)
 
-# Evaluate the model
 mse = mean_squared_error(y, y_pred)
 print(f'Mean Squared Error: {mse}')
 
-# Plot the results
-plt.figure(figsize=(10, 6))
+random_forest_graph = plt.figure(figsize=(10, 6))
 plt.scatter(df.index, df['TotalVictims'], label='Total Victims')
-plt.plot(df.index, y_pred, linewidth=2, label='Random Forest Prediction')
+plt.plot(df.index, y_pred, linewidth=2, label='Random Forest Prediction', color = "black")
 plt.title('Total Victims over Time with Random Forest Regressor')
 plt.xlabel('Index of Data Points (Sorted by Year and Month)')
 plt.ylabel('Total Victims')
@@ -494,14 +475,11 @@ from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 
-# Assuming df is already loaded and sorted
 df.sort_values(by=['Year', 'Month'], inplace=True)
 
-# Prepare the data
-X = np.array(df.index).reshape(-1, 1)  # Index as the independent variable
+X = np.array(df.index).reshape(-1, 1) 
 y = df['TotalVictims']
 
-# Hyperparameter tuning using Grid Search
 param_grid = {
     'n_estimators': [100, 200, 300],
     'max_depth': [None, 10, 20, 30],
@@ -512,35 +490,45 @@ param_grid = {
 grid_search = GridSearchCV(RandomForestRegressor(random_state=42), param_grid, cv=5, scoring='neg_mean_squared_error', n_jobs=-1)
 grid_search.fit(X, y)
 
-# Best parameters from Grid Search
 best_params = grid_search.best_params_
 print(f'Best parameters: {best_params}')
 
-# Train the best model
 best_model = grid_search.best_estimator_
 
-# Evaluate the model using cross-validation
 cv_scores = cross_val_score(best_model, X, y, cv=5, scoring='neg_mean_squared_error')
 mean_cv_score = -np.mean(cv_scores)
 print(f'Mean Cross-Validation MSE: {mean_cv_score}')
 
-# Make predictions
 y_pred = best_model.predict(X)
 
-# Evaluate the model
 mse = mean_squared_error(y, y_pred)
 print(f'Mean Squared Error: {mse}')
 
-# Plot the results
-plt.figure(figsize=(10, 6))
+improved_random_forest = plt.figure(figsize=(10, 6))
 plt.scatter(df.index, df['TotalVictims'], label='Total Victims')
-plt.plot(df.index, y_pred, linewidth=2, label='Random Forest Prediction')
-plt.title('Total Victims over Time with Improved Random Forest Regressor')
+plt.plot(df.index, y_pred, linewidth=2, label='Random Forest Prediction', color="black")
+plt.title('Total Victims over Time with "Improved" Random Forest Regressor')
 plt.xlabel('Index of Data Points (Sorted by Year and Month)')
 plt.ylabel('Total Victims')
 plt.legend()
 plt.grid(True)
 # plt.show()
+
+#%% style for table
+
+style = ttk.Style()
+style.configure("Treeview", 
+                background="#D3D3D3",
+                foreground="black",
+                rowheight=25,
+                fieldbackground="#D3D3D3")
+style.map('Treeview', background=[('selected', 'blue')])
+
+style.configure("Treeview.Heading", 
+                background="lightblue",
+                foreground="black",
+                font=('Helvetica', 12, 'bold'))
+
 
 #%% creating a window of tkenter app
 
@@ -572,39 +560,111 @@ main_frame.bind("<Configure>", configure_scroll_region)
 
 frames = []
 
-first_frame = tk.Frame(main_frame, bd=2, relief="groove")
-first_frame.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
+header_frame = tk.Frame(main_frame, bd=2, relief="groove", bg="lightblue")
+header_frame.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
+
+header_label = tk.Label(header_frame, text="Hate Crimes Data Dashboard", font=("Helvetica", 24, "bold"), bg="lightblue")
+header_label.pack(pady=10)
+frames.append(header_frame)
+
+first_frame = tk.Frame(main_frame, bd=2, relief="groove", background="white")
+first_frame.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
 frames.append(first_frame)
 
-second_frame = tk.Frame(main_frame, bd=2, relief="groove")
-second_frame.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
+second_frame = tk.Frame(main_frame, bd=2, relief="groove", background="white")
+second_frame.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
 frames.append(second_frame)
 
+third_frame = tk.Frame(main_frame, bd=2, relief="groove", background="white")
+third_frame.grid(row=4, column=0, padx=10, pady=10, sticky="ew")
+frames.append(third_frame)
+
+forth_frame = tk.Frame(main_frame, bd=2, relief="groove", background="white")
+forth_frame.grid(row=5, column=0, padx=10, pady=10, sticky="ew")
+frames.append(forth_frame)
+
+fifth_frame = tk.Frame(main_frame, bd=2, relief="groove", background="white")
+fifth_frame.grid(row=6, column=0, padx=10, pady=10, sticky="ew")
+frames.append(fifth_frame)
+
+header_frame2 = tk.Frame(main_frame, bd=2, relief="groove", bg="lightblue")
+header_frame2.grid(row=7, column=0, padx=10, pady=10, sticky="ew")
+
+header_label2 = tk.Label(header_frame2, text="Predictions", font=("Helvetica", 24, "bold"), bg="lightblue")
+header_label2.pack(pady=10)
+frames.append(header_frame2)
+
+sixth_frame = tk.Frame(main_frame, bd=2, relief="groove", background="white")
+sixth_frame.grid(row=8, column=0, padx=10, pady=10, sticky="ew")
+frames.append(sixth_frame)
+
+seventh_frame = tk.Frame(main_frame, bd=2, relief="groove", background="white")
+seventh_frame.grid(row=9, column=0, padx=10, pady=10, sticky="ew")
+frames.append(seventh_frame)
 
 canvas1 = FigureCanvasTkAgg(victims_by_year_graph, master = first_frame)
 canvas1.draw()
-canvas1.get_tk_widget().pack(side="left", fill="none", expand="False")
+canvas1.get_tk_widget().pack(side="top", fill="both", expand=True, pady=(10, 5))
 
-# canvas2 = FigureCanvasTkAgg(max_year_graph, master = first_frame)
-# canvas2.draw()
-# canvas2.get_tk_widget().pack(side="left", fill="both", expand="True")
-
-canvas3 = FigureCanvasTkAgg(location_graph, master = first_frame)
-canvas3.draw()
-canvas3.get_tk_widget().pack(side="left", fill="none", expand="False")
-
-canvas4 = FigureCanvasTkAgg(weapons_graph, master = second_frame)
+#graph for least and most victims showed for every month
+canvas2 = FigureCanvasTkAgg(fig, master = first_frame)
+canvas2.draw()
+canvas2.get_tk_widget().pack(side="left", fill="both", expand="True")
+canvas4 = FigureCanvasTkAgg(weapons_graph, master = first_frame)
 canvas4.draw()
-canvas4.get_tk_widget().pack(side="left", fill="none", expand="False")
+canvas4.get_tk_widget().pack(side="top", fill="both", expand=True, pady=(5, 10))
 
-canvas5 = FigureCanvasTkAgg(bias_graph, master = second_frame)
-canvas5.draw()
-canvas5.get_tk_widget().pack(side="left", fill="none", expand="False")
+canvas3 = FigureCanvasTkAgg(location_graph, master = second_frame)
+canvas3.draw()
+canvas3.get_tk_widget().pack(side="left")
 
 canvas6 = FigureCanvasTkAgg(victim_type_graph, master = second_frame)
 canvas6.draw()
-canvas6.get_tk_widget().pack(side="left", fill="none", expand="False")
+canvas6.get_tk_widget().pack(side="left")
 
+canvas5 = FigureCanvasTkAgg(bias_graph, master = third_frame)
+canvas5.draw()
+canvas5.get_tk_widget().pack(side="left")
+
+canvas6 = FigureCanvasTkAgg(suspects_race_graph, master = third_frame)
+canvas6.draw()
+canvas6.get_tk_widget().pack(side="left")
+
+def create_table(frame, data):
+    columns = list(data.columns)
+    tree = ttk.Treeview(frame, columns=columns, show="headings", style="Treeview")
+    for col in columns:
+        tree.heading(col, text=col)
+        tree.column(col, minwidth=0, width=100)
+    for index, row in data.iterrows():
+        tree.insert("", "end", values=list(row))
+    return tree
+
+victim_counts = data_columns1['TotalVictims'].value_counts().reset_index()
+victim_counts.columns = ['Number of Victims', 'Frequency']
+victim_counts = victim_counts.sort_values(by='Number of Victims')
+
+table_frame = tk.Frame(main_frame, bd=2, relief="groove")
+table_frame.grid(row=3, column=0, padx=10, pady=10, sticky="ew")
+
+table = create_table(table_frame, victim_counts)
+table.pack(side="top", fill="both", expand=True, pady=(10, 5))
+
+canvas7 = FigureCanvasTkAgg(victim_suspec_age_graph, master = forth_frame)
+canvas7.draw()
+canvas7.get_tk_widget().pack(side="left")
+
+canvas8 = FigureCanvasTkAgg(linear_regresion_graph, master = sixth_frame)
+canvas8.draw()
+canvas8.get_tk_widget().pack()
+
+canvas9 = FigureCanvasTkAgg(random_forest_graph, master = seventh_frame)
+canvas9.draw()
+canvas9.get_tk_widget().pack(side="left")
+
+canvas10 = FigureCanvasTkAgg(improved_random_forest, master = seventh_frame)
+canvas10.draw()
+canvas10.get_tk_widget().pack(side="left")
 
 configure_scroll_region(None)
 root.mainloop()
