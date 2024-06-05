@@ -10,13 +10,12 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sb
-import dash
-from dash import dcc, html
-import plotly.express as px
-from plotly.tools import mpl_to_plotly
-import dash_bootstrap_components as dbc 
-import dash_table
-import plotly.graph_objs as go
+import tkinter as tk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from tkinter import ttk
+
+plt.rcParams["axes.prop_cycle"] = plt.cycler(color = ['#aee4ff', '#6a9cfd', '#ffb8d0', '#fee5e1', '#033495'])
+
 #%% importing data
 
 data = pd.read_csv("Police_Department_Investigated_Hate_Crimes_20240531.csv")
@@ -123,13 +122,13 @@ print(len(unique_weapon_values))
 victims_by_year = data_columns1.groupby('Year')['TotalVictims'].sum().reset_index()
 
 # Plotting the graph
-plt.figure(figsize=(10, 6))
-plt.plot(victims_by_year['Year'], victims_by_year['TotalVictims'], marker='o', linestyle='-', color='b')
+victims_by_year_graph = plt.figure(figsize=(10, 6))
+plt.plot(victims_by_year['Year'], victims_by_year['TotalVictims'], marker='o', linestyle='-', color='#033495')
 plt.title('Total Number of Victims by Year')
 plt.xlabel('Year')
 plt.ylabel('Total Number of Victims')
 plt.grid(True)
-plt.show()
+# plt.show()
 
 #%% years with most and least victims by month
 
@@ -142,22 +141,25 @@ min_year = total_victims_by_year.idxmin()
 max_year_data = df[df['Year'] == max_year].groupby('Month')['TotalVictims'].sum().reset_index()
 min_year_data = df[df['Year'] == min_year].groupby('Month')['TotalVictims'].sum().reset_index()
 
-plt.figure(figsize=(12, 6))
+fig = plt.figure(figsize=(10, 6))
 
-# Plot for max year
-plt.subplot(1, 2, 1)
-plt.plot(max_year_data['Month'], max_year_data['TotalVictims'], marker='o', linestyle='-', color='b')
-plt.title(f'Total Number of Victims by Month in {max_year}')
-plt.xlabel('Month')
-plt.ylabel('Total Number of Victims')
-plt.grid(True)
-plt.xticks(range(1, 13))
+# Create a subplot and plot on it
+max_year_graph = fig.add_subplot(1, 2, 1)
+max_year_graph.plot(max_year_data['Month'], max_year_data['TotalVictims'], marker='o', linestyle='-', color='#033495')
+max_year_graph.set_title(f'Total Number of Victims by Month in {max_year}')
+max_year_graph.set_xlabel('Month')
+max_year_graph.set_ylabel('Total Number of Victims')
+max_year_graph.grid(True)
+max_year_graph.set_xticks(range(1, 13))
 plt.tight_layout()
-plt.show()
+# plt.show()
+
+
+#%%
 
 # Plot for min year
-plt.subplot(1, 2, 2)
-plt.plot(min_year_data['Month'], min_year_data['TotalVictims'], marker='o', linestyle='-', color='r')
+min_year_graph = plt.subplot(1, 2, 2)
+plt.plot(min_year_data['Month'], min_year_data['TotalVictims'], marker='o', linestyle='-', color = '#6a9cfd')
 plt.title(f'Total Number of Victims by Month in {min_year}')
 plt.xlabel('Month')
 plt.ylabel('Total Number of Victims')
@@ -165,7 +167,7 @@ plt.grid(True)
 plt.xticks(range(1, 13))
 
 plt.tight_layout()
-plt.show()
+# plt.show()
 
 #%% distribution of number of victims attacked at a time
 
@@ -175,8 +177,6 @@ victim_counts.columns = ['Number of Victims', 'Frequency']
 victim_counts = victim_counts.sort_values(by='Number of Victims')
 
 print(victim_counts)
-
-app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 #%% 5 locations for crimes bar graph
 
 location_mapping = {
@@ -234,14 +234,14 @@ total_victims_by_location = data_columns1.groupby('Location')['TotalVictims'].su
 top_5_locations = total_victims_by_location.nlargest(5).reset_index()
 
 # Plotting the graph
-plt.figure(figsize=(10, 6))
-plt.bar(top_5_locations['Location'], top_5_locations['TotalVictims'], color='skyblue')
+location_graph = plt.figure(figsize=(10, 6))
+plt.bar(top_5_locations['Location'], top_5_locations['TotalVictims'])
 plt.title('Top 5 Locations with Most Crimes')
 plt.xlabel('Location')
 plt.ylabel('Total Number of Victims')
 plt.grid(axis='y')
 
-plt.show()
+# plt.show()
 
 
 
@@ -258,16 +258,7 @@ plt.legend(title='Race', labels=suspects_race_freq.index, loc='center left', bbo
 
 plt.tight_layout()
 
-plt.show()
-
-plotly_fig = mpl_to_plotly(fig)
-
-plotly_fig.update_layout(
-    width=800,
-    height=600,
-    margin=dict(l=50, r=50, t=50, b=50)
-)
-
+# plt.show()
 
 #%% frequency of weapons used (generalized) bar
 
@@ -289,8 +280,8 @@ df['Weapon'] = df['Weapon'].map(weapon_rename_dict)
 
 weapon_counts = data_columns1['Weapon'].value_counts()
 
-plt.figure(figsize=(12, 8))
-weapon_counts.plot(kind='bar', color='skyblue')
+weapons_graph = plt.figure(figsize=(12, 8))
+weapon_counts.plot(kind='bar')
 plt.title('Most Frequent Weapons Used')
 plt.xlabel('Weapon Type')
 plt.ylabel('Frequency')
@@ -302,24 +293,24 @@ plt.show()
 
 bias_counts = data_columns1['BiasType'].value_counts()
 
-plt.figure(figsize=(12, 8))
-bias_counts.plot(kind='bar', color='skyblue')
+bias_graph = plt.figure(figsize=(12, 8))
+bias_counts.plot(kind='bar')
 plt.title('Most Frequent Biases Type')
 plt.xlabel('Bias Type')
 plt.ylabel('Frequency')
 plt.xticks(rotation=45)
 plt.tight_layout()
-plt.show()
+#plt.show()
 
 
 victim_type_counts = data_columns1['VictimType'].value_counts()
 
-plt.figure(figsize=(10, 10))
-plt.pie(victim_type_counts, labels=None, autopct='%1.1f%%', startangle=140, colors=plt.cm.Paired.colors)
+victim_type_graph = plt.figure(figsize=(10, 10))
+plt.pie(victim_type_counts, labels=None, autopct='%1.1f%%', startangle=140)
 plt.title('Distribution of Victim Types')
 plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
 plt.legend(victim_type_counts.index, title="Victim Types", bbox_to_anchor=(1, 0, 0.5, 1))
-plt.show()
+# plt.show()
 
 #%% more detailed bias bar
 
@@ -358,13 +349,13 @@ data_columns1['DetailedBias'] = data_columns1['Bias'].map(bias_grouping_dict)
 broad_bias_counts = data_columns1['DetailedBias'].value_counts()
 
 plt.figure(figsize=(12, 8))
-broad_bias_counts.plot(kind='bar', color='skyblue')
+broad_bias_counts.plot(kind='bar')
 plt.title('Most Frequent Broad Biases')
 plt.xlabel('Detailed Bias Type')
 plt.ylabel('Frequency')
 plt.xticks(rotation=45)
 plt.tight_layout()
-plt.show()
+# plt.show()
 
 
 # Plot for each racial group
@@ -385,7 +376,7 @@ plt.legend(title='Racial Group')
 plt.grid(True, linestyle='--', alpha=0.7)
 plt.xticks(rotation=45)
 plt.tight_layout()
-plt.show()
+# plt.show()
 #%% juvenile victims/suspects
 
 data_columns1.fillna(0, inplace=True)
@@ -395,16 +386,16 @@ suspect_counts = data_columns1[['AdultSuspects', 'JuvenileSuspects']].sum()
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 7))
 
-ax1.pie(victim_counts, labels=victim_counts.index, autopct='%1.1f%%', startangle=140, colors=plt.cm.Paired.colors)
+ax1.pie(victim_counts, labels=victim_counts.index, autopct='%1.1f%%', startangle=140)
 ax1.set_title('Distribution of Victims')
 ax1.axis('equal')
 
-ax2.pie(suspect_counts, labels=suspect_counts.index, autopct='%1.1f%%', startangle=140, colors=plt.cm.Paired.colors)
+ax2.pie(suspect_counts, labels=suspect_counts.index, autopct='%1.1f%%', startangle=140)
 ax2.set_title('Distribution of Suspects')
 ax2.axis('equal')
 
 plt.tight_layout()
-plt.show()
+# plt.show()
 #%% removing unnecessary data
 #%%
 print(data_columns1.columns)
@@ -426,13 +417,13 @@ df.sort_values(by=['Year', 'Month'], inplace=True)
 import matplotlib.pyplot as plt
 
 plt.figure(figsize=(10, 6))
-plt.scatter(df.index, df['TotalVictims'], color='blue', label='Total Victims')
+plt.scatter(df.index, df['TotalVictims'], label='Total Victims')
 plt.title('Total Victims over Time')
 plt.xlabel('Index of Data Points (Sorted by Year and Month)')
 plt.ylabel('Total Victims')
 plt.legend()
 plt.grid(True)
-plt.show()
+# plt.show()
 
 from sklearn.linear_model import LinearRegression
 
@@ -449,14 +440,14 @@ y_pred = model.predict(X)
 
 # Plot the linear regression line
 plt.figure(figsize=(10, 6))
-plt.scatter(df.index, df['TotalVictims'], color='blue', label='Total Victims')
-plt.plot(df.index, y_pred, color='red', linewidth=2, label='Linear Regression')
+plt.scatter(df.index, df['TotalVictims'], label='Total Victims')
+plt.plot(df.index, y_pred, linewidth=2, label='Linear Regression')
 plt.title('Total Victims over Time with Linear Regression')
 plt.xlabel('Index of Data Points (Sorted by Year and Month)')
 plt.ylabel('Total Victims')
 plt.legend()
 plt.grid(True)
-plt.show()
+# plt.show()
 
 # Print the coefficients
 print(f'Intercept: {model.intercept_}')
@@ -485,14 +476,14 @@ print(f'Mean Squared Error: {mse}')
 
 # Plot the results
 plt.figure(figsize=(10, 6))
-plt.scatter(df.index, df['TotalVictims'], color='blue', label='Total Victims')
-plt.plot(df.index, y_pred, color='red', linewidth=2, label='Random Forest Prediction')
+plt.scatter(df.index, df['TotalVictims'], label='Total Victims')
+plt.plot(df.index, y_pred, linewidth=2, label='Random Forest Prediction')
 plt.title('Total Victims over Time with Random Forest Regressor')
 plt.xlabel('Index of Data Points (Sorted by Year and Month)')
 plt.ylabel('Total Victims')
 plt.legend()
 plt.grid(True)
-plt.show()
+# plt.show()
 
 #%%
 
@@ -542,90 +533,79 @@ print(f'Mean Squared Error: {mse}')
 
 # Plot the results
 plt.figure(figsize=(10, 6))
-plt.scatter(df.index, df['TotalVictims'], color='blue', label='Total Victims')
-plt.plot(df.index, y_pred, color='red', linewidth=2, label='Random Forest Prediction')
+plt.scatter(df.index, df['TotalVictims'], label='Total Victims')
+plt.plot(df.index, y_pred, linewidth=2, label='Random Forest Prediction')
 plt.title('Total Victims over Time with Improved Random Forest Regressor')
 plt.xlabel('Index of Data Points (Sorted by Year and Month)')
 plt.ylabel('Total Victims')
 plt.legend()
 plt.grid(True)
-plt.show()
+# plt.show()
 
-#%% dash
+#%% creating a window of tkenter app
 
-app = dash.Dash()
-app.layout = html.Div(
-    children = [ 
-    html.H1("Analysis of Hate Crimes in California: Trends and Insights"),
-    dbc.Row(
-        [
-            dbc.Col([
-                dcc.Dropdown(
-                    id='category',
-                    value='Select category of analysis',
-                    clearable=False,
-                    options=["Hate Crimes Data", "Trends", "Demographic Data"]
-                    ),
-            ],
-            #https://www.youtube.com/watch?v=dRjNfahHJRQ
-            width=4
-            )
-        ]
-    ),
-    dash_table.DataTable(
-        id='victim-counts-table',
-        columns=[{"name": i, "id": i} for i in victim_counts.columns],
-        data=victim_counts.to_dict('records'),
-        style_table={'overflowX': 'scroll'},
-        style_header={'backgroundColor': 'rgb(230, 230, 230)', 'fontWeight': 'bold'},
-        style_cell={'textAlign': 'left', 'minWidth': '100px', 'width': '100px', 'maxWidth': '150px'},
-    ),
-    dcc.Graph(
-        id='max-year-graph',
-        figure={
-            'data': [
-                go.Scatter(
-                    x=max_year_data['Month'],
-                    y=max_year_data['TotalVictims'],
-                    mode='lines+markers',
-                    marker=dict(color='blue'),
-                    name=f'Total Victims in {max_year}'
-                )
-            ],
-            'layout': go.Layout(
-                title=f'Total Number of Victims by Month in {max_year}',
-                xaxis=dict(title='Month', tickmode='linear'),
-                yaxis=dict(title='Total Number of Victims'),
-                gridcolor='LightGrey'
-            )
-        }
-    ),
-    
-    dcc.Graph(
-        id='min-year-graph',
-        figure={
-            'data': [
-                go.Scatter(
-                    x=min_year_data['Month'],
-                    y=min_year_data['TotalVictims'],
-                    mode='lines+markers',
-                    marker=dict(color='red'),
-                    name=f'Total Victims in {min_year}'
-                )
-            ],
-            'layout': go.Layout(
-                title=f'Total Number of Victims by Month in {min_year}',
-                xaxis=dict(title='Month', tickmode='linear'),
-                yaxis=dict(title='Total Number of Victims'),
-                gridcolor='LightGrey'
-            )
-        }
-    )
-    ])
+def configure_scroll_region(event):
+    canvas.configure(scrollregion=canvas.bbox("all"))
+
+root = tk.Tk()
+root.title("HateCrimesData")
+root.state('zoomed')
+
+# Create a canvas for the scrollable area
+canvas = tk.Canvas(root)
+canvas.pack(side="left", fill="both", expand=True)
+
+vsb = ttk.Scrollbar(root, orient="vertical", command=canvas.yview)
+vsb.pack(side="right", fill="y")
+canvas.configure(yscrollcommand=vsb.set)
+
+# Add a horizontal scrollbar to the canvas
+hsb = ttk.Scrollbar(root, orient="horizontal", command=canvas.xview)
+hsb.pack(side="bottom", fill="x")
+canvas.configure(xscrollcommand=hsb.set)
+
+# Create a frame inside the canvas to hold all the content
+main_frame = tk.Frame(canvas)
+canvas.create_window((0, 0), window=main_frame, anchor="nw")
+
+main_frame.bind("<Configure>", configure_scroll_region)
+
+frames = []
+
+first_frame = tk.Frame(main_frame, bd=2, relief="groove")
+first_frame.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
+frames.append(first_frame)
+
+second_frame = tk.Frame(main_frame, bd=2, relief="groove")
+second_frame.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
+frames.append(second_frame)
 
 
+canvas1 = FigureCanvasTkAgg(victims_by_year_graph, master = first_frame)
+canvas1.draw()
+canvas1.get_tk_widget().pack(side="left", fill="none", expand="False")
+
+# canvas2 = FigureCanvasTkAgg(max_year_graph, master = first_frame)
+# canvas2.draw()
+# canvas2.get_tk_widget().pack(side="left", fill="both", expand="True")
+
+canvas3 = FigureCanvasTkAgg(location_graph, master = first_frame)
+canvas3.draw()
+canvas3.get_tk_widget().pack(side="left", fill="none", expand="False")
+
+canvas4 = FigureCanvasTkAgg(weapons_graph, master = second_frame)
+canvas4.draw()
+canvas4.get_tk_widget().pack(side="left", fill="none", expand="False")
+
+canvas5 = FigureCanvasTkAgg(bias_graph, master = second_frame)
+canvas5.draw()
+canvas5.get_tk_widget().pack(side="left", fill="none", expand="False")
+
+canvas6 = FigureCanvasTkAgg(victim_type_graph, master = second_frame)
+canvas6.draw()
+canvas6.get_tk_widget().pack(side="left", fill="none", expand="False")
 
 
-# Run the app
-if __name__ == '__main__':
-    app.run_server(debug=True)
+configure_scroll_region(None)
+root.mainloop()
+
