@@ -13,6 +13,13 @@ import seaborn as sb
 import tkinter as tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tkinter import ttk
+import plotly.express as px
+import dash
+from dash import dcc, html
+import dash_bootstrap_components as dbc 
+import dash_table
+from sklearn.preprocessing import LabelEncoder
+
 
 plt.rcParams["axes.prop_cycle"] = plt.cycler(color = ['#aee4ff', '#fad4c0', '#ffb8d0', '#64b6ac', '#b09b99'])
 
@@ -414,7 +421,7 @@ plt.xlabel('Index of Data Points (Sorted by Year and Month)')
 plt.ylabel('Total Victims')
 plt.legend()
 plt.grid(True)
-# plt.show()
+plt.show()
 #%%
 from sklearn.linear_model import LinearRegression
 
@@ -438,7 +445,138 @@ plt.grid(True)
 
 print(f'Intercept: {model.intercept_}')
 print(f'Coefficient: {model.coef_[0]}')
+#%%Demographic data set
+demographic_set = pd.read_csv("San_Francisco_Population_and_Demographic_Census_data_20240531.csv")
 
+print(demographic_set.shape)
+
+#print(df.isna().sum())   #ne mogu da izbacim sve nedostajuce vrednosti jer bih ostala bez podataka
+
+
+demographic_set = demographic_set.loc[:, ["demographic_category", "demographic_category_label", "min_age", "max_age"]]
+print(demographic_set.head(5))
+
+print("Redovi sa nedostajucom vrednoscu: \n")
+print(demographic_set[demographic_set.isna().any(axis=1)])
+
+renamed_columns = {
+    'demographic_category': 'Demographic category',
+    'demographic_category_label': 'Demographic category label',
+    'min_age': 'Min age',
+    'man_age': 'Min age'
+}
+
+demographic_set = demographic_set.rename(columns=renamed_columns)
+#print(df.columns)
+
+unique_demographic_category_values = demographic_set["Demographic category"].unique()
+#print(unique_demographic_category_values)
+
+demographic_info = demographic_set["Demographic category label"].unique()
+print("Jedinstvene vrednosti za demographic_category_label: \n")
+print(demographic_info)
+
+print("Sumirano po demografskim labelama: \n")
+counted_demographic_category_label_values = demographic_set["Demographic category label"].value_counts()
+#print(counted_demographic_category_label_values)
+
+#%%
+# Definišemo funkciju koja izvlači rasu iz demografske informacije
+def extract_race(demographic_info):
+    if "Native Hawaiian or Other Pacific Islander" in demographic_info:
+        return "Asian/Pacific Islander"
+    elif "Two or more races" in demographic_info:
+        return "Group of Multiple Races"
+    elif "Some other race alone" in demographic_info:
+        return "Some other race alone"
+    elif "Hispanic or Latino" in demographic_info and "Not Hispanic or Latino" not in demographic_info:
+        return "Hispanic"
+    elif "Black or African American alone" in demographic_info:
+        return "Black or African American"
+    elif "American Indian or Alaska Native" in demographic_info:
+        return "American Indian or Alaska Native"
+    elif "Asian alone" in demographic_info:
+        return "Asian"
+    elif "Multi-Racial" in demographic_info:
+        return "Group of Multiple Races"
+    elif "White alone" in demographic_info:
+        return "White"
+    else:
+        return "Unknown"
+
+# Kreiramo novu kolonu "Rasa" primenom funkcije extract_race na postojeću kolonu "Demografska informacija"
+demographic_set['race'] = demographic_set['Demographic category label'].apply(extract_race)
+print("Rase preuredjeno: \n")
+print(demographic_set["race"])
+
+#%%
+# Definišemo funkciju koja izvlači pol iz demografske informacije
+def extract_sex(demographic_info):
+    if "Male" in demographic_info:
+        return "Male"
+    elif "Female" in demographic_info:
+        return "Female"
+    else:
+        return "Unknown"
+
+# Kreiramo novu kolonu "Rasa" primenom funkcije extract_race na postojeću kolonu "Demografska informacija"
+demographic_set['sex'] = demographic_set['Demographic category label'].apply(extract_sex)
+print("Pol preuredjeno: \n")
+print(demographic_set["sex"])
+
+#%%
+#prebrojavam vrednosti za race kolonu
+race_counts = demographic_set["race"].value_counts().reset_index()
+race_counts.columns = ["Race", "Count"]
+
+sex_counts = demographic_set["sex"].value_counts().reset_index()
+sex_counts.columns = ["Sex", "Count"]
+
+fig_race = px.bar(race_counts, x="Race", y="Count", title="Brojnost rasnih kategorija")
+fig_race.update_layout(xaxis_title="Rasa", yaxis_title="Brojnost")
+
+#grafički prikaz plotly 
+fig_sex = px.bar(sex_counts, x="Sex", y="Count", title="Brojnost muskaraca i zena")
+fig_sex.update_layout(xaxis_title="Pol", yaxis_title="Brojnost")
+
+# inicijalizacija Dash aplikacije
+app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
+
+# Definišite layout Dash aplikacije
+app.layout = html.Div([
+    dcc.Graph(figure=fig_race),
+    dcc.Graph(figure=fig_sex) 
+])
+
+#%%
+if __name__ == '__main__':
+    app.run_server(debug=True)
+#%%
+'''label_encoder_race = LabelEncoder()
+demographic_set['race_encoded'] = label_encoder_race.fit_transform(demographic_set['race'])
+
+# Definisanje DataFrame-a za obuku modela
+bias_testing_df = data_columns1.loc[data_columns1['BiasType'] == 'Race/Ethnicity/Ancestry', ['Bias', 'BiasType']]
+
+# Kodiranje kolone 'Bias' u numeričke vrednosti
+label_encoder_bias = LabelEncoder()
+bias_testing_df['Bias_encoded'] = label_encoder_bias.fit_transform(bias_testing_df['Bias'])
+
+# Kreiranje y vrednosti za model
+y_race_encoded = demographic_set['race_encoded']
+
+# Kreiranje i obuka modela
+model_race = LinearRegression()
+model_race.fit(bias_testing_df[['Bias_encoded']], y_race_encoded[:len(bias_testing_df)])
+
+# Testiranje modela
+test_bias_encoded = label_encoder_bias.transform(bias_testing_df['Bias']).reshape(-1, 1)
+y_race_predict_encoded = model_race.predict(test_bias_encoded)
+
+# Dekodiranje predikcija nazad u originalne rase
+y_race_predict = label_encoder_race.inverse_transform(np.round(y_race_predict_encoded).astype(int))
+
+print(y_race_predict)'''
 #%%
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
@@ -668,4 +806,5 @@ canvas10.get_tk_widget().pack(side="left")
 
 configure_scroll_region(None)
 root.mainloop()
+
 

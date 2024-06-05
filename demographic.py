@@ -16,18 +16,18 @@ from plotly.tools import mpl_to_plotly
 import dash_bootstrap_components as dbc 
 import dash_table
 
-df = pd.read_csv("San_Francisco_Population_and_Demographic_Census_data_20240531.csv")
+demographic_set = pd.read_csv("San_Francisco_Population_and_Demographic_Census_data_20240531.csv")
 
-print(df.shape)
+print(demographic_set.shape)
 
 #print(df.isna().sum())   #ne mogu da izbacim sve nedostajuce vrednosti jer bih ostala bez podataka
 
 
-df = df.loc[:, ["demographic_category", "demographic_category_label", "min_age", "max_age"]]
-print(df.head(5))
+demographic_set = demographic_set.loc[:, ["demographic_category", "demographic_category_label", "min_age", "max_age"]]
+print(demographic_set.head(5))
 
 print("Redovi sa nedostajucom vrednoscu: \n")
-print(df[df.isna().any(axis=1)])
+print(demographic_set[demographic_set.isna().any(axis=1)])
 
 renamed_columns = {
     'demographic_category': 'Demographic category',
@@ -36,18 +36,18 @@ renamed_columns = {
     'man_age': 'Min age'
 }
 
-df = df.rename(columns=renamed_columns)
+demographic_set = demographic_set.rename(columns=renamed_columns)
 #print(df.columns)
 
-unique_demographic_category_values = df["Demographic category"].unique()
+unique_demographic_category_values = demographic_set["Demographic category"].unique()
 #print(unique_demographic_category_values)
 
-demographic_info = df["Demographic category label"].unique()
+demographic_info = demographic_set["Demographic category label"].unique()
 print("Jedinstvene vrednosti za demographic_category_label: \n")
 print(demographic_info)
 
 print("Sumirano po demografskim labelama: \n")
-counted_demographic_category_label_values = df["Demographic category label"].value_counts()
+counted_demographic_category_label_values = demographic_set["Demographic category label"].value_counts()
 #print(counted_demographic_category_label_values)
 
 #%%
@@ -75,9 +75,9 @@ def extract_race(demographic_info):
         return "Unknown"
 
 # Kreiramo novu kolonu "Rasa" primenom funkcije extract_race na postojeću kolonu "Demografska informacija"
-df['race'] = df['Demographic category label'].apply(extract_race)
+demographic_set['race'] = demographic_set['Demographic category label'].apply(extract_race)
 print("Rase preuredjeno: \n")
-print(df["race"])
+print(demographic_set["race"])
 
 #%%
 # Definišemo funkciju koja izvlači pol iz demografske informacije
@@ -90,15 +90,15 @@ def extract_sex(demographic_info):
         return "Unknown"
 
 # Kreiramo novu kolonu "Rasa" primenom funkcije extract_race na postojeću kolonu "Demografska informacija"
-df['sex'] = df['Demographic category label'].apply(extract_sex)
+demographic_set['sex'] = demographic_set['Demographic category label'].apply(extract_sex)
 print("Pol preuredjeno: \n")
-print(df["sex"])
+print(demographic_set["sex"])
 #%%
 #prebrojavam vrednosti za race kolonu
-race_counts = df["race"].value_counts().reset_index()
+race_counts = demographic_set["race"].value_counts().reset_index()
 race_counts.columns = ["Race", "Count"]
 
-sex_counts = df["sex"].value_counts().reset_index()
+sex_counts = demographic_set["sex"].value_counts().reset_index()
 sex_counts.columns = ["Sex", "Count"]
 
 fig_race = px.bar(race_counts, x="Race", y="Count", title="Brojnost rasnih kategorija")
