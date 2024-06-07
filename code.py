@@ -135,7 +135,7 @@ plt.title('Total Number of Victims by Year')
 plt.xlabel('Year')
 plt.ylabel('Total Number of Victims')
 plt.grid(True)
-# plt.show()
+plt.show()
 
 #%% years with most and least victims by month
 
@@ -165,7 +165,7 @@ axes[1].set_ylabel('Total Victims')
 
 plt.tight_layout()
 
-#plt.show()
+plt.show()
 
 #%% distribution of number of victims attacked at a time
 
@@ -239,7 +239,7 @@ plt.xlabel('Location')
 plt.ylabel('Total Number of Victims')
 plt.grid(axis='y')
 
-# plt.show()
+plt.show()
 
 
 
@@ -257,7 +257,7 @@ plt.legend(title='Race', labels=suspects_race_freq.index, loc='center left', bbo
 
 plt.tight_layout()
 
-# plt.show()
+plt.show()
 
 #%% frequency of weapons used (generalized) bar
 
@@ -299,7 +299,7 @@ plt.xlabel('Bias Type')
 plt.ylabel('Frequency')
 plt.xticks(rotation=45)
 plt.tight_layout()
-#plt.show()
+plt.show()
 
 
 victim_type_counts = data_columns1['VictimType'].value_counts()
@@ -309,7 +309,7 @@ plt.pie(victim_type_counts, labels=None, autopct='%1.1f%%', startangle=140)
 plt.title('Distribution of Victim Types')
 plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
 plt.legend(victim_type_counts.index, title="Victim Types", bbox_to_anchor=(1, 0, 0.5, 1))
-# plt.show()
+plt.show()
 
 #%% more detailed bias bar
 
@@ -354,7 +354,7 @@ plt.xlabel('Detailed Bias Type')
 plt.ylabel('Frequency')
 plt.xticks(rotation=45)
 plt.tight_layout()
-# plt.show()
+plt.show()
 #%%Plot for each racial group
 
 racial_groups = ['Asian', 'Black', 'White', 'Latino']
@@ -374,7 +374,7 @@ plt.legend(title='Racial Group')
 plt.grid(True, linestyle='--', alpha=0.7)
 plt.xticks(rotation=45)
 plt.tight_layout()
-# plt.show()
+plt.show()
 #%% juvenile victims/suspects
 
 data_columns1.fillna(0, inplace=True)
@@ -393,7 +393,7 @@ ax2.set_title('Distribution of Suspects')
 ax2.axis('equal')
 
 plt.tight_layout()
-# plt.show()
+plt.show()
 #%% removing unnecessary data
 #%%
 print(data_columns1.columns)
@@ -441,7 +441,7 @@ plt.xlabel('Index of Data Points (Sorted by Year and Month)')
 plt.ylabel('Total Victims')
 plt.legend()
 plt.grid(True)
-# plt.show()
+plt.show()
 
 print(f'Intercept: {model.intercept_}')
 print(f'Coefficient: {model.coef_[0]}')
@@ -602,7 +602,7 @@ plt.xlabel('Index of Data Points (Sorted by Year and Month)')
 plt.ylabel('Total Victims')
 plt.legend()
 plt.grid(True)
-# plt.show()
+plt.show()
 
 #%%
 
@@ -650,7 +650,7 @@ plt.xlabel('Index of Data Points (Sorted by Year and Month)')
 plt.ylabel('Total Victims')
 plt.legend()
 plt.grid(True)
-# plt.show()
+plt.show()
 
 #%% style for table
 
